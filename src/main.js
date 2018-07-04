@@ -10,6 +10,7 @@ import VueI18n from 'vue-i18n';
 import util from './libs/util';
 import axios from 'axios';
 import env from '../build/env';
+import config from './config'  //api地址
 Vue.use(VueI18n);
 Vue.use(iView);
 
@@ -22,19 +23,17 @@ new Vue({
         currentPageName: ''
     },
     mounted () {
-        let $this=this
-        const ajaxUrl = env === 'development || test'
-            ? 'http://118.89.190.166:9980'
-            : env === 'production'
-                ? 'http://123.206.195.237:9980'
-                : 'http://118.89.190.166:9980';
-        console.log(ajaxUrl)
-
-        let instance = axios.create({
-            baseURL: ajaxUrl,
-            timeout: 30000
-        });
-        // 添加请求拦截器
+        let $this = this
+        /**
+         * [instance 初始化axios对象]
+         * @type {[type]}
+         */
+        let instance = axios.create({baseURL:config.sysConfig});
+        /*
+        *
+        * 添加请求拦截器，加载之前loading  调用iview loading组件
+        * 
+        */
         instance.interceptors.request.use(function (config) {
             $this.$Spin.show({
                 render: (h) => {
@@ -43,7 +42,7 @@ new Vue({
                             'class': 'demo-spin-icon-load',
                             props: {
                                 type: 'load-c',
-                                size: 18
+                                size: 28
                             }
                         }),
                         h('div', 'Loading')
@@ -54,24 +53,37 @@ new Vue({
         }, function (error) {
             return Promise.reject(error);
         });
-        // 添加响应拦截器
+        /*
+        *
+        * 添加响应拦截器，加载之后loading hide()
+        * 
+        */
         instance.interceptors.response.use(function (response) {
             $this.$Spin.hide();
+            if(response.data.code == 103){
+                $this.$router.push({name: 'login'})
+                localStorage.clear()
+            }
             return response;
         }, function (error) {
             return Promise.reject(error);
         });
+
+        /*
+        *
+        * 添加VUE实例属性用来代替axios
+        * 
+        */
+        Vue.prototype.$http = instance
+        Vue.http = instance
+
+
         this.currentPageName = this.$route.name;
         // 显示打开的页面的列表
         this.$store.commit('setOpenedList');
         this.$store.commit('initCachepage');
         // 权限菜单过滤相关
         this.$store.commit('updateMenulist');
-        // iview-admin检查更新
-        //util.checkUpdate(this);
-        instance.get('login').then(res => {
-            
-        });
     },
     created () {
         let tagsList = [];

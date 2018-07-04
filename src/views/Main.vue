@@ -13,8 +13,8 @@
                     :open-names="openedSubmenuArr"
                     :menu-list="menuList">
                     <div slot="top" class="logo-con">
-                        <img v-show="!shrink"  src="../images/logo.jpg" key="max-logo" />
-                        <img v-show="shrink" src="../images/logo-min.jpg" key="min-logo" />
+                        <img v-show="!shrink"  src="../images/logo.png" key="max-logo" />
+                        <img v-show="shrink" src="../images/logo-min.png" key="min-logo" />
                     </div>
                 </shrinkable-menu>
             </scroll-bar>
@@ -49,7 +49,7 @@
                                     <DropdownItem name="loginout" divided>退出登录</DropdownItem>
                                 </DropdownMenu>
                             </Dropdown>
-                            <Avatar :src="avatorPath" style="background: #619fe7;margin-left: 10px;"></Avatar>
+                            <!-- <Avatar :src="avatorPath" style="background: #619fe7;margin-left: 10px;"></Avatar> -->
                         </Row>
                     </div>
                 </div>
@@ -78,7 +78,9 @@
     import Cookies from 'js-cookie';
     import util from '@/libs/util.js';
     import scrollBar from '@/views/my-components/scroll-bar/vue-scroller-bars';
-    
+    import {
+    mapActions
+    } from 'vuex'
     export default {
         components: {
             shrinkableMenu,
@@ -125,6 +127,7 @@
             }
         },
         methods: {
+            ...mapActions([ 'LOGOUT']),
             init () {
                 let pathArr = util.setCurrentPath(this, this.$route.name);
                 this.$store.commit('updateMenulist');
@@ -148,11 +151,18 @@
                     });
                 } else if (name === 'loginout') {
                     // 退出登录
-                    this.$store.commit('logout', this);
-                    this.$store.commit('clearOpenedSubmenu');
-                    this.$router.push({
-                        name: 'login'
-                    });
+                    this.LOGOUT().then((data) => {
+                        if(data.code == 200){
+                            this.$store.commit('logout', this);
+                            this.$store.commit('clearOpenedSubmenu');
+                            this.$router.push({
+                                name: 'login'
+                            });
+                        }else{
+                            this.$Message.error(data.message);
+                        }
+                    })
+                    
                 }
             },
             checkTag (name) {

@@ -30,7 +30,6 @@
                             <Button @click="handleSubmit" type="primary" long>登录</Button>
                         </FormItem>
                     </Form>
-                    <p class="login-tip">输入任意用户名和密码即可</p>
                 </div>
             </Card>
         </div>
@@ -39,16 +38,21 @@
 
 <script>
 import Cookies from 'js-cookie';
+import Vue from 'vue';
+import md5 from 'js-md5';
+import {
+  mapActions
+} from 'vuex'
 export default {
     data () {
         return {
             form: {
-                userName: 'iview_admin',
+                userName: '',
                 password: ''
             },
             rules: {
                 userName: [
-                    { required: true, message: '账号不能为空', trigger: 'blur' }
+                    { required: true, message: '用户名不能为空', trigger: 'blur' }
                 ],
                 password: [
                     { required: true, message: '密码不能为空', trigger: 'blur' }
@@ -56,21 +60,31 @@ export default {
             }
         };
     },
+    mounted () {
+        
+    },
     methods: {
+        ...mapActions([ 'LOGIN']),
         handleSubmit () {
             this.$refs.loginForm.validate((valid) => {
                 if (valid) {
-                    Cookies.set('user', this.form.userName);
-                    Cookies.set('password', this.form.password);
-                    this.$store.commit('setAvator', 'https://ss1.bdstatic.com/70cFvXSh_Q1YnxGkpoWK1HF6hhy/it/u=3448484253,3685836170&fm=27&gp=0.jpg');
-                    if (this.form.userName === 'iview_admin') {
-                        Cookies.set('access', 0);
-                    } else {
-                        Cookies.set('access', 1);
-                    }
-                    this.$router.push({
-                        name: 'home_index'
-                    });
+                    this.LOGIN({username:this.form.userName,password:md5(this.form.password)}).then((data) => {
+                        if(data.code == 200){
+                            Vue.http.defaults.headers.common['X-Token'] = data.data.userId+'#'+data.data.token;
+                            Cookies.set('user', this.form.userName);
+                            Cookies.set('password', this.form.password);
+                            if (data.data.demand === 2) {
+                                Cookies.set('access', 0);
+                            } else {
+                                Cookies.set('access', 1);
+                            }
+                            this.$router.push({
+                                name: 'home_index'
+                            });
+                        }else{
+                            this.$Message.error(data.message);
+                        }
+                    })
                 }
             });
         }
