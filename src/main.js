@@ -61,8 +61,11 @@ new Vue({
         instance.interceptors.response.use(function (response) {
             $this.$Spin.hide();
             if(response.data.code == 103){
-                $this.$router.push({name: 'login'})
-                localStorage.clear()
+                $this.$store.commit('logout', $this);
+                $this.$store.commit('clearOpenedSubmenu');
+                $this.$router.push({
+                    name: 'login'
+                });
             }
             return response;
         }, function (error) {

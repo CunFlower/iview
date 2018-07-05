@@ -33,8 +33,26 @@ const LOGOUT_ERROR = 'LOGOUT_ERROR'
  * 退出登录链接
 */
 const LOGOUT_URL =  '/user/logout'
+
+/**
+ * 修改个人资料
+ */
+const MODIFY_USERINFO = 'MODIFY_USERINFO'
+/**
+ * 修改个人资料成功
+ */
+const MODIFY_USERINFO_SUCCESS = 'MODIFY_USERINFO_SUCCESS'
+/**
+ * 修改个人资料失败
+ */
+const MODIFY_USERINFO_ERROR = 'MODIFY_USERINFO_ERROR'
+/**
+ * 修改个人资料链接
+*/
+const MODIFY_USERINFO_URL =  '/user/modifyInfo'
+
 const user = {
-    state: {},
+    state: JSON.parse(localStorage.getItem('userInfo')),
     mutations: {
         logout (state, vm) {
             Cookies.remove('user');
@@ -58,6 +76,8 @@ const user = {
          */
         [LOGIN_SUCCESS](state, data) {
             console.log('LOGIN_SUCCESS', data)
+            state['INFO'] = data.data
+            localStorage.setItem('userInfo', JSON.stringify(state))
         },
         /**
          * 登录失败
@@ -76,6 +96,18 @@ const user = {
          */
         [LOGOUT_ERROR](state, error) {
             console.log('LOGOUT_ERROR', error)
+        },
+        /**
+         * 修改个人资料成功
+         */
+        [MODIFY_USERINFO_SUCCESS](state, data) {
+            console.log('MODIFY_USERINFO_SUCCESS', data)
+        },
+        /**
+         * 修改个人资料失败
+         */
+        [MODIFY_USERINFO_ERROR](state, error) {
+            console.log('MODIFY_USERINFO_ERROR', error)
         }
     },
     actions: {
@@ -112,7 +144,29 @@ const user = {
                     reject()
                 })
             })
+        },
+        /**
+         * 修改个人资料
+         */
+        [MODIFY_USERINFO]({
+            commit,
+            state
+        }, params) {
+            return new Promise((resolve, reject) => {
+                Vue.http.post(MODIFY_USERINFO_URL,params).then((response) => {
+                    commit('MODIFY_USERINFO_SUCCESS', response.data)
+                    resolve(response.data)
+                }, (error) => {
+                    commit('MODIFY_USERINFO_ERROR', error)
+                    reject()
+                })
+            })
         }
+    },
+    getters: {
+      userInfo: (state) => {
+        return state['INFO']
+      }
     }
 };
 
